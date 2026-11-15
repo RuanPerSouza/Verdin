@@ -1,0 +1,50 @@
+{
+  "expo": {
+    "name": "Verdin",
+    "slug": "estufa-inteligente",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#f4f8f3",
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocalNetworkUsageDescription": "O app se conecta ao ESP32 da estufa na sua rede Wi-Fi.",
+        "NSBonjourServices": ["_http._tcp"],
+        "NSAppTransportSecurity": {
+          "NSAllowsLocalNetworking": true
+        }
+      }
+    },
+    "android": {
+      "package": "com.matheusjuvino.verdin",
+      "adaptiveIcon": {
+        "backgroundColor": "#f4f8f3",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "owner": "matheusjuvino",
+    "extra": {
+      "eas": {
+        "projectId": "472eb037-c4c0-4c14-bfb0-ca39115b73da"
+      }
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
+    ]
+  }
+}

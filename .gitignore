@@ -1,0 +1,3 @@
+firmware/estufa_esp32/secrets.h
+tools/mock-esp32/node_modules/
+build/

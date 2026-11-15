@@ -1,0 +1,14 @@
+{
+  "name": "estufa-mock-esp32",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Simulador da API do ESP32 da estufa para desenvolver o app sem o hardware",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
