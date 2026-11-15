@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgroOptima - Seleção de Cultivo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>AgroOptima - Sistema de Estufa Inteligente</h1>
+        <p>Otimização de Recursos e Ciclo de Cultivo baseada em Pesquisa Operacional</p>
+    </header>
+
+    <div class="container">
+        <form action="/simulacao" method="POST" id="setupForm">
+            
+            <!-- Pesos de Otimização -->
+            <div class="weights-section">
+                <h2>⚖️ Ponderação de Objetivos (Pesquisa Operacional)</h2>
+                <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">Defina a importância relativa entre Custo Financeiro e Tempo de Cultivo. A soma deve ser exatamente 100%.</p>
+                
+                <div class="weight-group">
+                    <div class="weight-control">
+                        <label for="peso_custo">Peso do Custo: <span id="valCusto">50</span>%</label>
+                        <input type="range" id="peso_custo" name="peso_custo" min="0" max="100" value="50">
+                    </div>
+                    <div class="weight-control">
+                        <label for="peso_tempo">Peso do Tempo: <span id="valTempo">50</span>%</label>
+                        <input type="range" id="peso_tempo" name="peso_tempo" min="0" max="100" value="50">
+                    </div>
+                </div>
+                <div id="erroPeso" style="color: #d32f2f; font-size: 0.85rem; margin-top: 8px; font-weight: bold;"></div>
+            </div>
+
+            <h2>🌱 Selecione a Espécie de Planta</h2>
+            
+            <div class="card-grid">
+                {% for nome, planta in plantas.items() %}
+                <label class="plant-card" onclick="selecionarCard(this)">
+                    <div class="plant-header">
+                        <span class="plant-icon">{{ planta.icone }}</span>
+                        <div class="plant-title">
+                            <h3>{{ nome }}</h3>
+                            <input type="radio" name="planta" value="{{ nome }}" {% if loop.first %}checked{% endif %} style="display:none;">
+                        </div>
+                    </div>
+                    <div class="plant-details">
+                        💧 Água mín: {{ planta.agua_min }} ml/dia<br>
+                        💡 Luz: {{ planta.potencia_luz_w }}W ({{ planta.luz_min_minutos }} min/dia)<br>
+                        🧪 Nutrientes: {{ planta.nutrientes_min }} g/dia<br>
+                        ⏱️ Ciclo Base: {{ planta.tempo_des_min }}s
+                    </div>
+                    <span style="font-size: 0.8rem; color: var(--primary); font-weight: bold;">Clique para selecionar</span>
+                </label>
+                {% endfor %}
+            </div>
+
+            <div style="margin-top: 30px; text-align: center;">
+                <button type="submit" class="btn-primary" style="font-size: 1.1rem; padding: 15px 40px;">Iniciar Ambiente de Cultivo 🚀</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const rangeCusto = document.getElementById('peso_custo');
+        const rangeTempo = document.getElementById('peso_tempo');
+        const valCusto = document.getElementById('valCusto');
+        const valTempo = document.getElementById('valTempo');
+        const erroPeso = document.getElementById('erroPeso');
+        const form = document.getElementById('setupForm');
+
+        rangeCusto.addEventListener('input', () => {
+            let custo = parseInt(rangeCusto.value);
+            let tempo = 100 - custo;
+            rangeTempo.value = tempo;
+            valCusto.textContent = custo;
+            valTempo.textContent = tempo;
+        });
+
+        rangeTempo.addEventListener('input', () => {
+            let tempo = parseInt(rangeTempo.value);
+            let custo = 100 - tempo;
+            rangeCusto.value = custo;
+            valCusto.textContent = custo;
+            valTempo.textContent = tempo;
+        });
+
+        form.addEventListener('submit', (e) => {
+            let c = parseInt(rangeCusto.value);
+            let t = parseInt(rangeTempo.value);
+            if (c + t !== 100) {
+                e.preventDefault();
+                erroPeso.textContent = "⚠️ A soma dos pesos de Custo e Tempo deve totalizar exatamente 100%.";
+            }
+        });
+
+        function selecionarCard(element) {
+            document.querySelectorAll('.plant-card').forEach(c => c.classList.remove('selected'));
+            element.classList.add('selected');
+            element.querySelector('input[type="radio"]').checked = true;
+        }
+
+        // Marcar o primeiro card por padrão
+        document.querySelector('.plant-card').classList.add('selected');
+    </script>
+</body>
+</html>

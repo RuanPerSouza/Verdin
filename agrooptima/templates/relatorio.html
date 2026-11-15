@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgroOptima - Relatório Final de Cultivo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+            <div>
+                <h1>📋 Relatório Final de Desempenho & Otimização</h1>
+                <p>Ciclo de cultivo concluído com sucesso para {{ planta.icone }} {{ planta.nome }}</p>
+            </div>
+            <a href="/" class="btn-primary" style="background: #1b5e20; padding: 10px 20px; font-size: 0.95rem;">← Novo Cultivo</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Resumo do Desempenho da Planta -->
+        <div class="panel" style="margin-bottom: 25px; border-left: 5px solid var(--accent);">
+            <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+                <div style="font-size: 4.5rem;">🌳✨{{ planta.icone }}</div>
+                <div style="flex: 1;">
+                    <h2 style="color: var(--primary-dark); margin-bottom: 8px;">Desempenho da Espécie: {{ planta.nome }}</h2>
+                    <p style="font-size: 0.95rem; color: #444; line-height: 1.6;">
+                        <strong>Status do Ciclo:</strong> 100% Concluído em <strong>{{ resultado.tempo_otimizado }} segundos</strong> 
+                        (Redução otimizada em relação ao ciclo base de {{ planta.tempo_des_min }}s).<br>
+                        <strong>Ponderação Aplicada na Pesquisa Operacional:</strong> Custo ({{ resultado.peso_custo }}%) e Tempo ({{ resultado.peso_tempo }}%).
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela Detalhada de Custos Individuais (Sem Somatória) -->
+        <div class="panel" style="margin-bottom: 25px;">
+            <h3 style="color: var(--primary-dark); margin-bottom: 10px;">💰 Detalhamento Individual de Recursos e Custos</h3>
+            <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">
+                Abaixo está o consumo ótimo calculado pelo modelo matemático e o custo individual de cada recurso utilizado durante o ciclo:
+            </p>
+
+            <div style="overflow-x: auto;">
+                <table class="cost-table">
+                    <thead>
+                        <tr>
+                            <th>Recurso</th>
+                            <th>Quantidade Utilizada</th>
+                            <th>Unidade</th>
+                            <th>Custo Unitário</th>
+                            <th>Custo Individual</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>💧 Água</strong></td>
+                            <td>{{ resultado.agua }}</td>
+                            <td>ml/dia</td>
+                            <td>R$ {{ "%.4f"|format(planta.custo_agua_ml) }} / ml</td>
+                            <td><strong>R$ {{ "%.2f"|format(resultado.custos_individuais.agua) }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>⚡ Energia Elétrica (Iluminação {{ resultado.potencia_luz_w }}W)</strong></td>
+                            <td>{{ resultado.consumo_kwh }} ({{ resultado.consumo_wh }} Wh)</td>
+                            <td>kWh/dia</td>
+                            <td>R$ {{ "%.2f"|format(planta.custo_eletrica_kwh) }} / kWh</td>
+                            <td><strong>R$ {{ "%.2f"|format(resultado.custos_individuais.eletrica) }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>🧪 Nutrientes</strong></td>
+                            <td>{{ resultado.nutrientes }}</td>
+                            <td>g/dia</td>
+                            <td>R$ {{ "%.2f"|format(planta.custo_nutriente_g) }} / g</td>
+                            <td><strong>R$ {{ "%.2f"|format(resultado.custos_individuais.nutrientes) }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>⏱️ Tempo Operacional</strong></td>
+                            <td>{{ resultado.tempo_otimizado }}</td>
+                            <td>seg (ciclo)</td>
+                            <td>Peso atribuído: {{ resultado.peso_tempo }}%</td>
+                            <td><strong>R$ {{ "%.2f"|format(resultado.custos_individuais.tempo) }}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Análise Sazonal e Parâmetros Técnicos -->
+        <div class="simulation-layout">
+            <div class="panel">
+                <h3 style="color: var(--primary-dark); margin-bottom: 12px;">☀️ Análise Sazonal da Espécie</h3>
+                <div class="sensor-box" style="border-left-color: #2e7d32;">
+                    <strong>🟢 Melhor Época de Cultivo:</strong><br>
+                    {{ planta.melhor_epoca }}
+                </div>
+                <div class="sensor-box" style="border-left-color: #d32f2f; margin-top: 10px;">
+                    <strong>🔴 Pior Época de Cultivo:</strong><br>
+                    {{ planta.pior_epoca }}
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3 style="color: var(--primary-dark); margin-bottom: 12px;">📐 Resumo da Solução Ótima (PO)</h3>
+                <ul style="list-style: none; font-size: 0.9rem; line-height: 1.8; color: #333;">
+                    <li>• <strong>Potência do Sistema LED:</strong> {{ resultado.potencia_luz_w }} W</li>
+                    <li>• <strong>Tempo de Iluminação Diária:</strong> {{ resultado.luz_minutos }} min/dia ({{ resultado.luz_horas_equivalente }} h/dia)</li>
+                    <li>• <strong>Valor da Função Objetivo Ponderada (Z*):</strong> {{ resultado.z_total }}</li>
+                    <li>• <strong>Status do Modelo:</strong> Solução Ótima Viável (4ª restrição removida)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div style="margin-top: 30px; text-align: center;">
+            <a href="/" class="btn-primary" style="padding: 14px 35px; font-size: 1.05rem;">Iniciar Novo Cultivo na Estufa 🌱</a>
+        </div>
+    </div>
+</body>
+</html>

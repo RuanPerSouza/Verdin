@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgroOptima - Estufa Ativa</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1>Cultivando: {{ planta.icone }} {{ planta.nome }}</h1>
+                <p>Pesquisa Operacional Ativa (Pesos: Custo {{ peso_custo }}% | Tempo {{ peso_tempo }}%)</p>
+            </div>
+            <a href="/" class="btn-primary" style="background: #1b5e20; padding: 8px 16px; font-size: 0.9rem;">← Voltar ao Menu</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="simulation-layout">
+            
+            <!-- Painel Esquerdo: Visualização e Progresso com Animação -->
+            <div class="panel">
+                <h3>🖥️ Monitoramento Visual da Estufa</h3>
+                <div class="plant-stage-visual" id="plantIcon">🫘</div>
+                
+                <div class="sensor-box" id="acaoStatus">Sistema pronto para iniciar o cultivo otimizado.</div>
+
+                <p style="font-weight: bold; margin-top: 15px;">Progresso do Desenvolvimento:</p>
+                <div class="progress-container">
+                    <div class="progress-bar-fill" id="progressBar"></div>
+                </div>
+                <div style="text-align: right; font-size: 0.85rem; color: #666;" id="progressText">0%</div>
+
+                <div class="actions-row">
+                    <button class="btn-primary" id="btnIniciar" onclick="iniciarCultivo()" style="flex: 2;">▶ INICIAR CULTIVO</button>
+                    <button class="btn-secondary" id="btnPausar" onclick="pausarCultivo()" style="flex: 1;" disabled>⏸ Pausar</button>
+                </div>
+            </div>
+
+            <!-- Painel Direito: Sensores, Sazonalidade e PO -->
+            <div class="panel">
+                <h3>📊 Sensores & Sazonalidade</h3>
+                
+                <div class="sensor-box" id="tempSensor">🌡️ Temperatura Interna: 24.5 °C</div>
+                <div class="sensor-box" id="umidSensor">💧 Umidade do Solo: 65%</div>
+                <div class="sensor-box" id="luzSensor">☀️ Iluminação LED: Desligada</div>
+
+                <h3 style="margin-top: 20px;">☀️ Sazonalidade Climática</h3>
+                <p style="font-size: 0.85rem; margin-top: 5px;"><strong>Melhor Época:</strong> {{ planta.melhor_epoca }}</p>
+                <p style="font-size: 0.85rem; margin-top: 5px;"><strong>Pior Época:</strong> {{ planta.pior_epoca }}</p>
+
+                <button class="btn-primary" onclick="toggleModelo()" style="margin-top: 20px; width: 100%; background: #1b5e20;">📐 Ver Formulação Matemática (PO)</button>
+            </div>
+
+        </div>
+
+        <!-- Seção Dinâmica do Modelo Matemático -->
+        <div class="panel" id="modeloMatematicoBox" style="margin-top: 25px; display: none;">
+            <h3>📐 Formulação Matemática do Modelo de Pesquisa Operacional</h3>
+            <div class="math-box">
+• Função Objetivo (Minimização Ponderada):
+  Min Z = {{ peso_custo }}% · (Custo Financeiro) + {{ peso_tempo }}% · (Tempo Otimizado)
+
+• Variáveis de Decisão:
+  - X_agua: Quantidade de água (ml/dia) = {{ resultado.agua }} ml/dia
+  - X_luz_potencia: Potência da iluminação em Watts (W) = {{ resultado.potencia_luz_w }} W
+  - X_luz_tempo: Tempo de iluminação (min/dia) = {{ resultado.luz_minutos }} min/dia
+  - X_nutrientes: Quantidade de nutrientes (g/dia) = {{ resultado.nutrientes }} g/dia
+  - X_tempo: Ciclo de desenvolvimento otimizado = {{ resultado.tempo_otimizado }} segundos
+
+• Restrições do Modelo:
+  1) X_agua ≥ {{ planta.agua_min }} ml/dia
+  2) X_luz_tempo ≥ {{ planta.luz_min_minutos }} min/dia
+  3) X_nutrientes ≥ {{ planta.nutrientes_min }} g/dia
+  *(Nota: A 4ª restrição de tempo mínimo foi removida conforme diretrizes).*
+
+• Condições de Não-Negatividade:
+  X_i ≥ 0 para todo recurso i.
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Formulário Oculto para Enviar ao Relatório Final após o Cultivo -->
+    <form id="formRelatorioFinal" action="/relatorio" method="POST" style="display: none;">
+        <input type="hidden" name="planta" value="{{ planta.nome }}">
+        <input type="hidden" name="peso_custo" value="{{ peso_custo }}">
+        <input type="hidden" name="peso_tempo" value="{{ peso_tempo }}">
+        <input type="hidden" name="agua" value="{{ resultado.agua }}">
+        <input type="hidden" name="potencia_luz_w" value="{{ resultado.potencia_luz_w }}">
+        <input type="hidden" name="luz_minutos" value="{{ resultado.luz_minutos }}">
+        <input type="hidden" name="luz_horas_equivalente" value="{{ resultado.luz_horas_equivalente }}">
+        <input type="hidden" name="consumo_wh" value="{{ resultado.consumo_wh }}">
+        <input type="hidden" name="consumo_kwh" value="{{ resultado.consumo_kwh }}">
+        <input type="hidden" name="nutrientes" value="{{ resultado.nutrientes }}">
+        <input type="hidden" name="tempo_otimizado" value="{{ resultado.tempo_otimizado }}">
+        <input type="hidden" name="z_total" value="{{ resultado.z_total }}">
+        <input type="hidden" name="custo_agua" value="{{ resultado.custos_individuais.agua }}">
+        <input type="hidden" name="custo_eletrica" value="{{ resultado.custos_individuais.eletrica }}">
+        <input type="hidden" name="custo_nutrientes" value="{{ resultado.custos_individuais.nutrientes }}">
+        <input type="hidden" name="custo_tempo" value="{{ resultado.custos_individuais.tempo }}">
+    </form>
+
+    <script>
+        const tempoTotal = {{ resultado.tempo_otimizado }};
+        let tempoDecorrido = 0;
+        let simulando = false;
+        let intervalo = null;
+
+        function toggleModelo() {
+            const box = document.getElementById('modeloMatematicoBox');
+            box.style.display = box.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Função de Animação de Crescimento da Planta
+        function atualizarEstagioPlantacao(progresso) {
+            const iconeEl = document.getElementById('plantIcon');
+            const iconeFinal = "{{ planta.icone }}";
+
+            if (progresso < 25) {
+                iconeEl.innerHTML = "🫘"; // Semente
+                iconeEl.style.transform = "scale(0.8)";
+            } else if (progresso < 50) {
+                iconeEl.innerHTML = "🌱"; // Broto
+                iconeEl.style.transform = "scale(0.9)";
+            } else if (progresso < 75) {
+                iconeEl.innerHTML = "🌿"; // Muda
+                iconeEl.style.transform = "scale(1.0)";
+            } else if (progresso < 100) {
+                iconeEl.innerHTML = "🪴"; // Crescida
+                iconeEl.style.transform = "scale(1.1)";
+            } else {
+                iconeEl.innerHTML = "🌳✨" + iconeFinal; // Adulta com flor/fruto
+                iconeEl.style.transform = "scale(1.2)";
+            }
+        }
+
+        function iniciarCultivo() {
+            if (!simulando) {
+                simulando = true;
+                document.getElementById('btnIniciar').disabled = true;
+                document.getElementById('btnPausar').disabled = false;
+                document.getElementById('btnIniciar').textContent = "▶ Executando...";
+                
+                intervalo = setInterval(() => {
+                    tempoDecorrido++;
+                    let progresso = (tempoDecorrido / tempoTotal) * 100;
+                    if (progresso > 100) progresso = 100;
+
+                    document.getElementById('progressBar').style.width = progresso + '%';
+                    document.getElementById('progressText').textContent = Math.round(progresso) + '%';
+                    atualizarEstagioPlantacao(progresso);
+
+                    let etapas = [
+                        ["💧 Analisando umidade do solo...", "Umidade do Solo: 48% (Rega necessária)"],
+                        ["🚿 Acionando sistema de irrigação...", "💧 Irrigação automática ativa..."],
+                        ["🧪 Injetando solução de nutrientes...", "🧪 Dosagem de nutrientes aplicada."],
+                        ["💡 Acionando painel de LED ({{ resultado.potencia_luz_w }}W)...", "☀️ Iluminação LED Ligada ({{ resultado.luz_minutos }} min/dia)"],
+                        ["🌿 Monitorando crescimento acelerado...", "🌡️ Temperatura: 25.2 °C (Ideal)"]
+                    ];
+
+                    let idx = (tempoDecorrido - 1) % etapas.length;
+                    document.getElementById('acaoStatus').textContent = etapas[idx][0];
+                    document.getElementById('luzSensor').textContent = "☀️ " + etapas[idx][1];
+                    document.getElementById('tempSensor').textContent = "🌡️ Temperatura Interna: " + (23 + Math.random() * 3).toFixed(1) + " °C";
+                    document.getElementById('umidSensor').textContent = "💧 Umidade do Solo: " + Math.round(60 + Math.random() * 10) + "%";
+
+                    if (tempoDecorrido >= tempoTotal) {
+                        clearInterval(intervalo);
+                        simulando = false;
+                        document.getElementById('acaoStatus').textContent = "✨ Cultivo concluído! Gerando relatório...";
+                        
+                        setTimeout(() => {
+                            document.getElementById('formRelatorioFinal').submit();
+                        }, 1200);
+                    }
+                }, 1000);
+            }
+        }
+
+        function pausarCultivo() {
+            simulando = false;
+            clearInterval(intervalo);
+            document.getElementById('btnIniciar').disabled = false;
+            document.getElementById('btnPausar').disabled = true;
+            document.getElementById('btnIniciar').textContent = "▶ Retomar";
+            document.getElementById('acaoStatus').textContent = "⏸ Simulação pausada pelo operador.";
+        }
+    </script>
+</body>
+</html>
