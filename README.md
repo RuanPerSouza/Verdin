@@ -1,4 +1,4 @@
-# Estufa Inteligente com ESP32
+# Verdin — Estufa Inteligente com ESP32
 
 Estufa automatizada que monitora solo, ar, luz e reservatório, irriga sozinha com proteções para a bomba e se comunica com um app de celular pelo Wi-Fi.
 
